@@ -47,6 +47,7 @@ wss.on('connection', function connection(ws, request) {
 
     if (!userId) {
         ws.close();
+        return null
     }
     if (userId == null) {
         wss.close()
