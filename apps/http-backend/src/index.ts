@@ -1,19 +1,23 @@
-import dotenv from "dotenv";
-import path from "path"
+import "./env"
+console.log("DATABASE_URL loaded?", !!process.env.DATABASE_URL);
 
-dotenv.config({ path: path.resolve(process.cwd(), "../../packages/db/.env") });
+// import dotenv from "dotenv";
+// import path from "path"
+
+// dotenv.config({ path: path.resolve(process.cwd(), "../../packages/db/.env") });
 import express from "express"
 import jwt from "jsonwebtoken"
 import { JWT_SECRET } from "@repo/backend-common";
 import { middleware } from "./middleware";
 import { createUserSchema, signinUserSchema, createRoomSchema } from "@repo/common/zodschema"
 import { prismaClient } from "@repo/db"
-
+import cors from "cors"
 
 
 const app = express()
 
 app.use(express.json())
+app.use(cors())
 
 app.post("/signup", async (req, res) => {
 

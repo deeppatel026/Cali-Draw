@@ -2,17 +2,15 @@
   "name": "@repo/db",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.js"
     },
-    "./clients": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.js"
-    }
+    "./clients": {}
   },
   "scripts": {
     "build": "tsc -b",
@@ -20,7 +18,8 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {
-    "@repo/typescript-config": "workspace:*"
+    "@repo/typescript-config": "workspace:*",
+    "@types/pg": "^8.16.0"
   },
   "keywords": [],
   "author": "",
@@ -29,6 +28,7 @@
     "@prisma/adapter-pg": "^7.2.0",
     "@prisma/client": "^7.2.0",
     "@types/node": "^22.15.3",
+    "pg": "^8.17.2",
     "prisma": "^7.2.0"
   }
 }

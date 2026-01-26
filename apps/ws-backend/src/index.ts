@@ -31,6 +31,7 @@ function checkusr(token: string): string | null {
     catch (e) {
         return null
     }
+    return null;
 }
 
 
@@ -45,10 +46,10 @@ wss.on('connection', function connection(ws, request) {
     const token = queryParams.get('token') || "";
     const userId = checkusr(token);
 
-    if (!userId) {
-        ws.close();
-        return null
-    }
+    // if (!userId) {
+    //     ws.close();
+    //     return null
+    // }
     if (userId == null) {
         wss.close()
         return;
@@ -62,11 +63,13 @@ wss.on('connection', function connection(ws, request) {
 
 
     ws.on('message', async function message(data) {
+        let parsedData;
         if (typeof data !== 'string') {
-            ws.close();
-            return;
+            parsedData = JSON.parse(data.toString());
+        }else{
+            parsedData = JSON.parse(data)
         }
-        const parsedData = JSON.parse(data as string);
+
         if (parsedData.type === "join_room") {
             const user = users.find(z => z.ws === ws);
             user?.rooms.push(parsedData.roomId)
@@ -76,16 +79,37 @@ wss.on('connection', function connection(ws, request) {
             if (!user) {
                 return;
             }
-            user.rooms = user.rooms.filter(x => x === parsedData.room)
+            user.rooms = user?.rooms.filter(x => x === parsedData.room)
         }
 
         if (parsedData.type === "chat") {
             const roomId = parsedData.roomId;
             const message = parsedData.message;
-            
+            // roomId sent from the front-end may be either a numeric id or a slug.
+            // Resolve the Room record first to obtain the numeric `id` required by the FK.
+            let roomRecord = null;
+            try {
+                if (typeof roomId === 'number' || (/^[0-9]+$/.test(String(roomId)))) {
+                    roomRecord = await prismaClient.room.findUnique({ where: { id: Number(roomId) } });
+                }
+                if (!roomRecord) {
+                    roomRecord = await prismaClient.room.findUnique({ where: { slug: String(roomId) } });
+                }
+            } catch (e) {
+                // DB or adapter error - surface to client and stop
+                ws.send(JSON.stringify({ type: 'error', message: 'internal server error resolving room' }));
+                return;
+            }
+
+            if (!roomRecord) {
+                // room does not exist -> cannot create chat for it
+                ws.send(JSON.stringify({ type: 'error', message: `room not found: ${roomId}`, roomId }));
+                return;
+            }
+
             await prismaClient.chatArchive.create({
                 data: {
-                    roomId: roomId,
+                    roomId: roomRecord.id,
                     message,
                     userId
                 }
