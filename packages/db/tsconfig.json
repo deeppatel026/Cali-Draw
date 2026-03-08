@@ -9,7 +9,8 @@
         "module": "CommonJS",
         "target": "ES2022",
         "esModuleInterop": true,
-        "moduleResolution": "Node"
+        "moduleResolution": "Node",
+        "types": ["node"]
     },
     "include": ["src/**/*.ts"],
     "exclude": ["dist", "node_modules", "prisma", "generated"]

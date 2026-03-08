@@ -1,11 +1,18 @@
-import { RoomCanvas } from "@/components/RoomCanvas"
+"use client";
+import { useAuth } from "@/Context/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoutes";
+import { useParams } from "next/navigation";
+import { Canvas } from "@/components/Canvas";
 
-export default async function CanvasPage({params}: {
-    params: {
-        roomId: string
-    }
-}) {
+export default function CanvasPage() {
+  const { roomId } = useParams<{ roomId: string }>();
+  const { token, user } = useAuth();
 
-    const roomId = (await params).roomId
-    return <RoomCanvas roomId= {roomId} />
+  return (
+    <ProtectedRoute>
+      <div className="h-screen w-screen">
+        <Canvas roomId={roomId} token={token!} userId={user!.id} />
+      </div>
+    </ProtectedRoute>
+  );
 }

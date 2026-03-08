@@ -19,14 +19,23 @@ chats   ChatArchive[]
 }
 
 model Room {
+  id            Int           @id @default(autoincrement())
+  slug          String        @unique
+  name          String
+  created_date  DateTime      @default(now())
+  adminId       String
+  admin         User          @relation(fields: [adminId], references: [id])
+  chats         ChatArchive[]
+  shapes        Shape[]
+}
 
-id  Int @id @default(autoincrement())
-slug  String @unique
-created_date  DateTime  @default(now())
-adminId String
-admin User  @relation(fields: [adminId], references: [id])
-chats ChatArchive[]
-
+model Shape {
+  id          String   @id @default(uuid())
+  type        String
+  data        String   // full shape JSON (color, strokeWidth, seed, type-specific coords)
+  roomId      Int
+  room        Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
 }
 
 model ChatArchive {
