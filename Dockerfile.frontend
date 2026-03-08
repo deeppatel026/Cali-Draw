@@ -1,0 +1,75 @@
+# ─── Stage 0: base image ──────────────────────────────────────────────────────
+FROM node:20-alpine AS base
+RUN npm install -g pnpm@9 turbo --quiet
+
+# ─── Stage 1: prune workspace ─────────────────────────────────────────────────
+FROM base AS pruner
+WORKDIR /app
+COPY . .
+RUN turbo prune excelidraw-frontend --docker
+
+# ─── Stage 2: install dependencies ───────────────────────────────────────────
+# Only package manifests + lockfile here for maximum layer caching.
+# pnpm-workspace.yaml is REQUIRED so pnpm resolves workspace: deps correctly.
+FROM base AS deps
+WORKDIR /app
+
+COPY --from=pruner /app/out/json/ .
+COPY --from=pruner /app/out/pnpm-lock.yaml    ./pnpm-lock.yaml
+COPY --from=pruner /app/out/full/pnpm-workspace.yaml ./pnpm-workspace.yaml
+
+RUN pnpm install --frozen-lockfile
+
+# ─── Stage 3: build ───────────────────────────────────────────────────────────
+FROM base AS builder
+WORKDIR /app
+
+ARG NEXT_PUBLIC_HTTP_BACKEND_URL=http://localhost:3001
+ARG NEXT_PUBLIC_WS_URL=ws://localhost:8080
+ENV NEXT_PUBLIC_HTTP_BACKEND_URL=$NEXT_PUBLIC_HTTP_BACKEND_URL
+ENV NEXT_PUBLIC_WS_URL=$NEXT_PUBLIC_WS_URL
+
+# Bring pre-installed node_modules from deps stage
+COPY --from=deps /app/node_modules ./node_modules
+
+# Copy full source (includes pnpm-workspace.yaml, turbo.json, all packages)
+COPY --from=pruner /app/out/full/ .
+COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+
+# Re-run install so pnpm links workspace packages now that source is present.
+# External deps are already in node_modules so this is fast (only linking).
+RUN pnpm install --frozen-lockfile
+
+RUN turbo build --filter=excelidraw-frontend
+
+# ─── Stage 4: minimal runtime image ──────────────────────────────────────────
+FROM node:20-alpine AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
+
+RUN addgroup --system --gid 1001 nodejs \
+ && adduser  --system --uid 1001 nextjs
+
+# Public folder
+COPY --from=builder --chown=nextjs:nodejs \
+    /app/apps/excelidraw-frontend/public \
+    ./apps/excelidraw-frontend/public
+
+# Standalone bundle (Next.js emits a self-contained server with all deps baked in)
+COPY --from=builder --chown=nextjs:nodejs \
+    /app/apps/excelidraw-frontend/.next/standalone \
+    ./
+
+# Static assets must live inside the standalone tree next to server.js
+COPY --from=builder --chown=nextjs:nodejs \
+    /app/apps/excelidraw-frontend/.next/static \
+    ./apps/excelidraw-frontend/.next/static
+
+USER nextjs
+EXPOSE 3000
+
+# In a pnpm monorepo, Next.js standalone places server.js under the app subpath
+CMD ["node", "apps/excelidraw-frontend/server.js"]
