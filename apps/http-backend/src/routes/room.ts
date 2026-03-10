@@ -17,7 +17,7 @@ router.get("/", async (req: Request, res: Response) => {
   }
 });
 
-// POST create a new room
+// POST create a new room.
 router.post("/", async (req: Request, res: Response) => {
   try {
     const { name } = createRoomSchema.parse(req.body);
