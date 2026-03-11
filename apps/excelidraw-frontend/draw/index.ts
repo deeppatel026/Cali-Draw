@@ -57,7 +57,6 @@ export async function initDraw(canvas: HTMLCanvasElement, roomId: string, socket
         let shape: Shape | null = null
         if (selectedTool === 'rect') {
             shape = {
-                // @ts-expect-error -- type is a valid Shape discriminant
                 type: 'rect',
                 x: startX,
                 y: startY,
@@ -68,7 +67,7 @@ export async function initDraw(canvas: HTMLCanvasElement, roomId: string, socket
         }else if(selectedTool === "circle"){
             const radius = Math.max(width,height)/2;
             shape = {
-                // @ts-expect-error -- type is a valid Shape discriminant
+                
                 type: 'circle',
                 radius: radius,
                 centerX: startX+radius,
@@ -134,13 +133,27 @@ function clearCanvas(existingShapes: Shape[], canvas: HTMLCanvasElement, ctx: Ca
     })
 }
 
-async function getExistingShapes(roomId: string) {
-    const res = await axios.get(`${HTTP_BACKEND}/chats/${roomId}`)
-    const messages = res.data.messages;
+async function getExistingShapes(roomId: string): Promise<Shape[]> {
+    const res = await axios.get(`${HTTP_BACKEND}/api/v1/rooms/${roomId}`);
+    const room = res.data.room;
 
-    const shapes = messages.map((x: { message: string }) => {
-        const messageData = JSON.parse(x.message)
-        return messageData.shape;
-    })
+    const shapes: Shape[] = (room?.shapes || [])
+        .map((x: { data: string }) => {
+            try {
+                const parsed = JSON.parse(x.data);
+
+                // If DB stores { shape: {...} }, unwrap it
+                if (parsed?.shape) {
+                    return parsed.shape as Shape;
+                }
+
+                // If DB stores the shape directly
+                return parsed as Shape;
+            } catch {
+                return null;
+            }
+        })
+        .filter((shape: Shape | null): shape is Shape => shape !== null);
+
     return shapes;
 }
