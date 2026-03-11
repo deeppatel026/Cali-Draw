@@ -46,12 +46,9 @@ wss.on('connection', function connection(ws, request) {
     const token = queryParams.get('token') || "";
     const userId = checkusr(token);
 
-    // if (!userId) {
-    //     ws.close();
-    //     return null
-    // }
+    
     if (userId == null) {
-        wss.close()
+        ws.close()
         return;
     }
 

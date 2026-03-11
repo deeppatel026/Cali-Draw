@@ -31,11 +31,11 @@ services:
     environment:
       NODE_ENV:    production
       PORT:        3001
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-excelidraw}?schema=public
+      DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET:  ${JWT_SECRET:?JWT_SECRET is required}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
     ports:
-      - "3001:3001"
+      - "127.0.0.1:3001:3001"
 
   # ── WebSocket backend ───────────────────────────────────────────────────────
   ws-backend:
@@ -49,10 +49,10 @@ services:
     environment:
       NODE_ENV:    production
       WS_PORT:     8080
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-excelidraw}?schema=public
+      DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET:  ${JWT_SECRET:?JWT_SECRET is required}
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
 
   # ── Next.js frontend ────────────────────────────────────────────────────────
   frontend:
@@ -70,7 +70,7 @@ services:
       NODE_ENV: production
       PORT:     3000
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
 
 volumes:
   postgres_data:
