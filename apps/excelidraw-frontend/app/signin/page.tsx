@@ -16,8 +16,8 @@ export default function Signin() {
     setLoading(true);
     try {
       await login(email, password);
-    } catch (err: any) {
-      setError(err.message || "Login failed");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Login failed");
     } finally {
       setLoading(false);
     }

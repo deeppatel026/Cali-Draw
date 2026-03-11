@@ -18,7 +18,7 @@ export async function initDraw(canvas: HTMLCanvasElement, roomId: string, socket
 
     const ctx = canvas.getContext("2d");
 
-    let existingShapes: Shape[] = await getExistingShapes(roomId);
+    const existingShapes: Shape[] = await getExistingShapes(roomId);
 
     if (!ctx) {
         return
@@ -52,23 +52,23 @@ export async function initDraw(canvas: HTMLCanvasElement, roomId: string, socket
         clicked = false;
         const width = e.clientX - startX;
         const height = e.clientY - startY;
-        //@ts-ignore
+        // @ts-expect-error -- window.selectedTool is set globally at runtime
         const selectedTool = window.selectedTool
         let shape: Shape | null = null
         if (selectedTool === 'rect') {
             shape = {
-                // @ts-ignore
+                // @ts-expect-error -- type is a valid Shape discriminant
                 type: 'rect',
                 x: startX,
                 y: startY,
                 width,
                 height
             }
-            
+
         }else if(selectedTool === "circle"){
             const radius = Math.max(width,height)/2;
             shape = {
-                // @ts-ignore
+                // @ts-expect-error -- type is a valid Shape discriminant
                 type: 'circle',
                 radius: radius,
                 centerX: startX+radius,
@@ -97,7 +97,7 @@ export async function initDraw(canvas: HTMLCanvasElement, roomId: string, socket
 
             clearCanvas(existingShapes, canvas, ctx);
             ctx.strokeStyle = "rgba(255,255,255)"
-            //@ts-ignore
+            // @ts-expect-error -- window.selectedTool is set globally at runtime
             const selectedTool = window.selectedTool
             if (selectedTool === "rect") {
                 ctx.strokeRect(startX, startY, width, height)

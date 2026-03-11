@@ -103,7 +103,7 @@ const STROKE_WIDTHS = [1, 2, 4, 8];
 
 // ─── Canvas ───────────────────────────────────────────────────────────────────
 
-export function Canvas({ roomId, token, userId }: {
+export function Canvas({ roomId, token }: {
     roomId: string;
     token: string;
     userId: string;

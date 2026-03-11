@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 
 interface User {
@@ -20,23 +20,19 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(() => {
+    if (typeof window === "undefined") return null;
+    const saved = localStorage.getItem("user");
+    return saved ? (JSON.parse(saved) as User) : null;
+  });
+  const [token, setToken] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("token");
+  });
+  const [isLoading] = useState(false);
   const router = useRouter();
 
   const HTTP_BACKEND_URL = process.env.NEXT_PUBLIC_HTTP_BACKEND_URL || "http://localhost:3001";
-
-  // Rehydrate from localStorage on mount
-  useEffect(() => {
-    const savedToken = localStorage.getItem("token");
-    const savedUser = localStorage.getItem("user");
-    if (savedToken && savedUser) {
-      setToken(savedToken);
-      setUser(JSON.parse(savedUser));
-    }
-    setIsLoading(false);
-  }, []);
 
   const login = async (email: string, password: string) => {
     const res = await fetch(`${HTTP_BACKEND_URL}/api/v1/auth/signin`, {

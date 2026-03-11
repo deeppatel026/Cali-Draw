@@ -1,7 +1,7 @@
 "use client";
 import { useAuth } from "@/Context/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoutes";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 
 interface Room {
@@ -21,7 +21,7 @@ export default function DashboardPage() {
   const [error, setError] = useState("");
   const router = useRouter();
 
-  const fetchRooms = async () => {
+  const fetchRooms = useCallback(async () => {
     const res = await fetch(`${HTTP_URL}/api/v1/rooms`, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -29,11 +29,11 @@ export default function DashboardPage() {
       const data = await res.json();
       setRooms(data.rooms);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     if (token) fetchRooms();
-  }, [token]);
+  }, [token, fetchRooms]);
 
   const createRoom = async () => {
     if (!newRoomName.trim()) return;
