@@ -4,6 +4,9 @@ RUN npm install -g pnpm@9 turbo --quiet
 FROM base AS builder
 WORKDIR /app
 
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
+
 COPY . .
 RUN pnpm install --frozen-lockfile
 

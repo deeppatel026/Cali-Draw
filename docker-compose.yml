@@ -24,6 +24,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.http
+      args:
+        DATABASE_URL: ${DATABASE_URL}
     restart: unless-stopped
     depends_on:
       postgres:
@@ -42,6 +44,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.ws
+      args:
+        DATABASE_URL: ${DATABASE_URL}
     restart: unless-stopped
     depends_on:
       postgres:
