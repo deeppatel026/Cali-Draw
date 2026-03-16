@@ -364,7 +364,7 @@ function TopRight() {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7048e8" strokeWidth="2" strokeLinecap="round">
                     <path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
                 </svg>
-                <span className="text-sm font-semibold text-gray-800 tracking-tight">ExceliDraw</span>
+                <span className="text-sm font-semibold text-gray-800 tracking-tight">Cali-Draw</span>
             </div>
             <button
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium rounded-xl shadow-lg shadow-violet-600/25 transition-colors"
