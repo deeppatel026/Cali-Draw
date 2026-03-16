@@ -138,7 +138,7 @@ export default function LandingPage() {
                                   style={{ background: "linear-gradient(135deg,#7c3aed,#3b82f6)" }}>
                                 <Pencil size={14} color="#fff" />
                             </span>
-                            <span style={{ fontSize: 15, letterSpacing: "-0.02em" }}>ExceliDraw</span>
+                            <span style={{ fontSize: 15, letterSpacing: "-0.02em" }}>Cali-Draw</span>
                         </Link>
 
                         <nav className="hidden sm:flex items-center gap-6">
@@ -240,7 +240,7 @@ export default function LandingPage() {
                                   style={{ padding: "13px 28px", fontSize: 15, textDecoration: "none" }}>
                                 Get Started Free <ArrowRight size={16} />
                             </Link>
-                            <a href="https://github.com"
+                            <a href="https://github.com/deeppatel026/excalidraw"
                                className="btn-ghost inline-flex items-center gap-2 font-semibold rounded-xl"
                                style={{
                                    padding: "13px 28px", fontSize: 15, textDecoration: "none",
@@ -271,7 +271,7 @@ export default function LandingPage() {
                                         background: "rgba(255,255,255,0.05)", borderRadius: 6,
                                         padding: "3px 12px", fontSize: 11, color: "#6b7280", textAlign: "center",
                                     }}>
-                                        app.excelidraw.com/canvas/my-project
+                                        cali-draw/canvas/canvasId
                                     </div>
                                 </div>
 
@@ -453,7 +453,7 @@ export default function LandingPage() {
                             </span>
                         </h2>
                         <p style={{ color: "#6b7280", fontSize: "1.0625rem", marginBottom: 40, maxWidth: 420, margin: "0 auto 40px" }}>
-                            Join teams already using ExceliDraw to turn ideas into shared visual reality.
+                            Join teams already using Cali-draw to turn ideas into shared visual reality.
                         </p>
                         <Link href="/signup"
                               className="btn-primary inline-flex items-center gap-2 text-white font-semibold rounded-xl"
@@ -474,7 +474,7 @@ export default function LandingPage() {
                                       style={{ background: "linear-gradient(135deg,#7c3aed,#3b82f6)" }}>
                                     <Pencil size={14} color="#fff" />
                                 </span>
-                                <span style={{ fontWeight: 600, fontSize: 15, letterSpacing: "-0.02em" }}>ExceliDraw</span>
+                                <span style={{ fontWeight: 600, fontSize: 15, letterSpacing: "-0.02em" }}>Cali-Draw</span>
                             </div>
                             <p style={{ color: "#4b5563", fontSize: 13, lineHeight: 1.65, maxWidth: 190 }}>
                                 Real-time collaborative whiteboard for modern teams.
@@ -504,7 +504,7 @@ export default function LandingPage() {
                     <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4"
                          style={{ borderTop: "1px solid #111", paddingTop: 20, paddingBottom: 20 }}>
                         <p style={{ fontSize: 12, color: "#374151" }}>
-                            © {new Date().getFullYear()} ExceliDraw. All rights reserved.
+                            © {new Date().getFullYear()} Cali-Draw. All rights reserved.
                         </p>
                         <div className="flex items-center gap-4">
                             <a href="#" style={{ color: "#374151" }} className="hover:text-white transition-colors">
