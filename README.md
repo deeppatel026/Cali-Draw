@@ -1,135 +1,159 @@
-# Turborepo starter
+# Cali-Draw
 
-This Turborepo starter is maintained by the Turborepo core team.
+A production-grade real-time collaborative whiteboard. Draw, sketch, and brainstorm with multiple users on the same canvas simultaneously.
 
-## Using this example
+**Live:** [cali-draw.com](https://cali-draw.com) &nbsp;·&nbsp; **Status:** Active (bugs listed below)
 
-Run the following command:
 
-```sh
-npx create-turbo@latest
-```
+---
 
-## What's inside?
+## What it does
 
-This Turborepo includes the following packages/apps:
+- Real-time multi-user canvas with WebSocket-driven state sync
+- Room-based collaboration — share a URL, anyone with the link joins your canvas
+- Shapes, lines, freehand drawing, colors, and stroke styles
+- JWT-authenticated sessions across both REST and WebSocket layers
+- Persistent canvas state via PostgreSQL
 
-### Apps and Packages
+---
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+## Architecture
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
+This isn't a monolith. Three independent services in a [Turborepo](https://turbo.build/) monorepo:
 
 ```
-cd my-turborepo
+apps/
+├── frontend        # Next.js 14 — canvas UI, auth flows
+├── http-backend    # Node.js/Express — REST APIs, auth, room management
+└── ws-backend      # Node.js — WebSocket server, real-time event broadcasting
 
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
+packages/
+├── db              # Prisma ORM, shared schema, migrations
+└── ui              # Shared UI components
 ```
 
-You can build a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+**How real-time sync works:**
 
 ```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
+Client A draws shape
+    → WebSocket message to WS server
+    → Server broadcasts to all clients in room (except sender)
+    → Client B receives event and updates canvas state
+    → Optimistic update on Client A, corrected by server broadcast if conflict
 ```
 
-### Develop
+**Why separate the HTTP and WebSocket backends?**
 
-To develop all apps and packages, run the following command:
+They scale differently. HTTP traffic is bursty and stateless. WebSocket connections are persistent and stateful. Separating them means you can scale each independently without one bottlenecking the other.
 
-```
-cd my-turborepo
+---
 
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
+## The hard parts (lessons learned)
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
-```
+**JWT on a WebSocket handshake is not the same as HTTP auth.**
+Browsers don't send custom headers on WS upgrade requests. Token goes in the query param (`?token=...`), validated server-side before the connection is accepted. Get this wrong and anyone joins any room.
 
-You can develop a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+**Nginx reverse proxy needs WebSocket upgrade headers.**
+Without `proxy_set_header Upgrade $http_upgrade` and `proxy_set_header Connection "Upgrade"`, the handshake silently fails. No error message. Nothing in the logs. Just no connection. Added 2 hours to the first deployment.
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
+**Docker networking in production is not the same as localhost.**
+`localhost` inside a container refers to that container, not the host machine. Services need to reference each other by container name in the Docker network. What worked perfectly in `docker-compose up` broke entirely on EC2 until this was fixed.
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
+**Multi-user event ordering.**
+When two users draw simultaneously, the server needs to maintain consistent ordering across all clients. Implemented deterministic event ordering with optimistic client-side updates and server broadcast corrections.
 
-### Remote Caching
+---
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+## Tech stack
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
+| Layer | Tech |
+|---|---|
+| Frontend | Next.js 14, React, TypeScript, TailwindCSS, HTML5 Canvas API |
+| HTTP Backend | Node.js, Express, TypeScript, JWT auth |
+| WebSocket Backend | Node.js, TypeScript, ws library |
+| Database | PostgreSQL (Neon Cloud), Prisma ORM |
+| Infrastructure | AWS EC2, Docker, Docker Compose, Nginx, Let's Encrypt (TLS) |
+| Monorepo | Turborepo, Bun |
 
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
+---
 
-```
-cd my-turborepo
+## Running locally
 
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
+**Prerequisites:** Node.js 18+, Bun, Docker, PostgreSQL
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
-```
+```bash
+# Clone the repo
+git clone https://github.com/deeppatel026/Cali-Draw.git
+cd Cali-Draw
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+# Install dependencies
+bun install
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+# Set up environment variables
+cp apps/http-backend/.env.example apps/http-backend/.env
+cp apps/ws-backend/.env.example apps/ws-backend/.env
+cp apps/frontend/.env.example apps/frontend/.env
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
+# Run database migrations
+cd packages/db && bunx prisma migrate dev
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
+# Start all services
+bun run dev
 ```
 
-## Useful Links
+Services start at:
+- Frontend: `http://localhost:3000`
+- HTTP Backend: `http://localhost:3001`
+- WebSocket Backend: `ws://localhost:8080`
 
-Learn more about the power of Turborepo:
+---
 
-- [Tasks](https://turborepo.com/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.com/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+## Deployment
+
+Deployed on AWS EC2 with Docker Compose and Nginx as reverse proxy.
+
+```
+Internet → Nginx (EC2)
+              ├── / → frontend (port 3000)
+              ├── /api → http-backend (port 3001)
+              └── /ws → ws-backend (port 3002)
+```
+
+TLS via Let's Encrypt + Certbot with automatic renewal.
+
+The Nginx WebSocket proxy config that took the longest to figure out:
+
+```nginx
+location /ws {
+    proxy_pass http://ws-backend:3002;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "Upgrade";
+    proxy_set_header Host $host;
+}
+```
+
+---
+
+## Known bugs
+
+Being honest about this:
+
+- Footer links don't work yet
+- No back button on signup or canvas pages
+- Share button on canvas does nothing
+
+Fixing these. Deployed anyway because waiting for perfect means deploying nothing.
+
+---
+
+## What's next
+
+- Fix the known bugs above
+- LLM layer: "describe this diagram" feature using vision API
+- Undo/redo support
+- Export canvas as PNG/SVG
+- Mobile touch support
+
+---
+
